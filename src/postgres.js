@@ -6,8 +6,13 @@ const client = new Client({
   },
 });
 
+let connected = false;
+
 async function getClient() {
-  await client.connect();
+  if (!connected) {
+    await client.connect();
+    connected = true;
+  }
 
   async function getTransactions() {
     return client.query('select * from transactions;').then((res) => res.rows);
