@@ -1,0 +1,19 @@
+{
+  "name": "ynab-splitwise-sync",
+  "version": "0.0.1",
+  "description": "Sync SplitWise transactions to You Need A Budget",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "node-fetch": "^2.6.1",
+    "pg": "^8.7.1",
+    "query-string": "^7.0.1",
+    "ynab": "^0.0.1"
+  }
+}
