@@ -18,8 +18,15 @@ async function getClient() {
     return client.query('select * from transactions;').then((res) => res.rows);
   }
 
+  async function getMostRecentTransaction() {
+    return client
+      .query('select * from transactions order by date desc limit 1;')
+      .then((res) => res.rows[0]);
+  }
+
   return {
     getTransactions,
+    getMostRecentTransaction,
     disconnect: client.end.bind(client),
   };
 }

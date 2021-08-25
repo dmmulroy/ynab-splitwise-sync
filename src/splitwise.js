@@ -10,7 +10,7 @@ async function getExpenses({ dated_after } = {}) {
     headers: {
       Authorization: `Bearer ${process.env.SPLITWISE_API_TOKEN}`,
     },
-  }).then((res) => res.json()?.expenses);
+  }).then((res) => res.json()?.expenses ?? []);
 }
 
 async function getExpense(id) {
