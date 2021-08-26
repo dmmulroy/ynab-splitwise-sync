@@ -14,20 +14,35 @@ async function getClient() {
     connected = true;
   }
 
-  async function getTransactions() {
-    return client.query('select * from transactions;').then((res) => res.rows);
+  async function getSyncedTransactions() {
+    return client
+      .query('select * from synced_transactions;')
+      .then((res) => res.rows);
   }
 
-  async function getMostRecentTransaction() {
+  async function getMostRecentSyncedTransaction() {
     return client
-      .query('select * from transactions order by date desc limit 1;')
+      .query('select * from synced_transactions order by date desc limit 1;')
       .then((res) => res.rows[0]);
   }
 
+  async function saveSyncedTransactions(transactions) {
+    const stmt = `insert into synced_transactions(splitwise_id, ynab_id, amount, date) values($1, $2, $3, $4) returning *;`;
+    const synced_transactions = await Promise.all(
+      transactions.map(({ splitwise_id, ynab_id, amount, date }) =>
+        client
+          .query(stmt, [splitwise_id, ynab_id, amount, date])
+          .then((res) => res.rows[0])
+      )
+    );
+
+    return synced_transactions;
+  }
+
   return {
-    getTransactions,
-    getMostRecentTransaction,
-    disconnect: client.end.bind(client),
+    getSyncedTransactions,
+    getMostRecentSyncedTransaction,
+    saveSyncedTransactions,
   };
 }
 
