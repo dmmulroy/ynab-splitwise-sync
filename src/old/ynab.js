@@ -7,11 +7,13 @@ async function createTransactions(transactions) {
     return [];
   }
 
+  process.env;
+
   const { data } = await client.transactions.createTransactions(
     process.env.YNAB_BUDGET_ID,
     {
       transactions,
-    }
+    },
   );
 
   return data.transactions;
