@@ -1,9 +1,9 @@
-import db from './db/client';
+import SyncedTransaction from './db/syncedTransaction';
 
 (async () => {
   try {
-    await db.authenticate();
-    console.log('connected!');
+    await SyncedTransaction.sync({ alter: true, force: true });
+    console.log('success!');
   } catch (error) {
     console.log(error);
   }
