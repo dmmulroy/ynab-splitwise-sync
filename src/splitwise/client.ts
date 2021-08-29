@@ -15,10 +15,36 @@ const splitwiseExpenseSchema = z.object({
   payment: z.boolean(),
   cost: z.string(),
   repayments: z.array(repaymentSchema),
-  date: z.date(),
-  created_at: z.date(),
-  updated_at: z.union([z.date(), z.null()]),
-  deleted_at: z.union([z.date(), z.null()]),
+  date: z
+    .string()
+    .refine((str) => !isNaN(Date.parse(str)), {
+      message: 'String must parse to Date',
+    })
+    .transform((str) => new Date(str)),
+  created_at: z
+    .string()
+    .refine((str) => !isNaN(Date.parse(str)), {
+      message: 'String must parse to Date',
+    })
+    .transform((str) => new Date(str)),
+  updated_at: z.union([
+    z
+      .string()
+      .refine((str) => !isNaN(Date.parse(str)), {
+        message: 'String must parse to Date',
+      })
+      .transform((str) => new Date(str)),
+    z.null(),
+  ]),
+  deleted_at: z.union([
+    z
+      .string()
+      .refine((str) => !isNaN(Date.parse(str)), {
+        message: 'String must parse to Date',
+      })
+      .transform((str) => new Date(str)),
+    z.null(),
+  ]),
 });
 
 export type SplitwiseExpense = z.TypeOf<typeof splitwiseExpenseSchema>;
@@ -57,8 +83,6 @@ class SplitwiseClient implements Splitwise {
         Authorization: `Bearer ${this.apiKey}`,
       },
     }).then((res) => res.json());
-
-    console.log({ response });
 
     return getExpensesResponseSchema.parse(response).expenses;
   }
