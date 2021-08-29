@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node src/index.ts -P ./tsconfig.json"
+    "start:dev": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node -r dotenv/config src/index.ts -P ./tsconfig.json"
   },
   "author": "",
   "license": "ISC",
@@ -15,11 +15,13 @@
     "pg": "^8.7.1",
     "query-string": "^7.0.1",
     "sequelize": "^6.6.5",
-    "ynab": "^1.25.0"
+    "ynab": "^1.25.0",
+    "zod": "^3.8.1"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",
     "@types/node": "^8.0.29",
+    "@types/node-fetch": "^2.5.12",
     "@types/pg": "^8.6.1",
     "@types/sequelize": "^4.28.10",
     "@typescript-eslint/eslint-plugin": "^4.29.3",

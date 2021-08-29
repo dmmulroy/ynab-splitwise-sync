@@ -1,22 +1,76 @@
-export interface SplitwiseExpense {
-  id: number;
-  group_id: number;
-  description: string;
-  payment: boolean;
-  cost: string;
-  repayments: Repayment[];
-  date: Date;
-  created_at: Date;
-  updated_at: Date | null;
-  deleted_at: Date | null;
+import fetch from 'node-fetch';
+import { z } from 'zod';
+import qs from 'query-string';
+
+const repaymentSchema = z.object({
+  from: z.number(),
+  to: z.number(),
+  amount: z.string(),
+});
+
+const splitwiseExpenseSchema = z.object({
+  id: z.number(),
+  group_id: z.number(),
+  description: z.string(),
+  payment: z.boolean(),
+  cost: z.string(),
+  repayments: z.array(repaymentSchema),
+  date: z.date(),
+  created_at: z.date(),
+  updated_at: z.union([z.date(), z.null()]),
+  deleted_at: z.union([z.date(), z.null()]),
+});
+
+export type SplitwiseExpense = z.TypeOf<typeof splitwiseExpenseSchema>;
+
+const getExpenseByIdResponseSchema = z.object({
+  expense: splitwiseExpenseSchema,
+});
+
+const getExpensesResponseSchema = z.object({
+  expenses: z.array(splitwiseExpenseSchema),
+});
+
+export type GetExpenseByIdResponse = z.TypeOf<
+  typeof getExpenseByIdResponseSchema
+>;
+
+export interface Splitwise {
+  getExpenses(datedAfter?: Date): Promise<SplitwiseExpense[]>;
+  getExpenseById(id: string): Promise<SplitwiseExpense>;
 }
 
-interface Repayment {
-  from: number;
-  to: number;
-  amount: string;
+const SPLITWISE_API_URL = `https://secure.splitwise.com/api/v3.0`;
+class SplitwiseClient implements Splitwise {
+  constructor(
+    private readonly apiKey: string,
+    private readonly groupId: string,
+  ) {}
+
+  async getExpenses(datedAfter?: Date): Promise<SplitwiseExpense[]> {
+    const query = qs.stringify({
+      group_id: this.groupId,
+      dated_after: datedAfter,
+    });
+    const response = await fetch(`${SPLITWISE_API_URL}/get_expenses?${query}`, {
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+    }).then((res) => res.json());
+
+    console.log({ response });
+
+    return getExpensesResponseSchema.parse(response).expenses;
+  }
+  async getExpenseById(id: string): Promise<SplitwiseExpense> {
+    const response = await fetch(`${SPLITWISE_API_URL}/get_expense/${id}`, {
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+    }).then((res) => res.json());
+
+    return getExpenseByIdResponseSchema.parse(response).expense;
+  }
 }
 
-export interface SplitwiseClient {
-  getExpenses(datedAfter?: Date): Promise<unknown>;
-}
+export default SplitwiseClient;

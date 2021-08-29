@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "allowJs": true,
-    "noErrorTruncation": true
+    "noErrorTruncation": true,
+    "strictNullChecks": true
   }
 }
