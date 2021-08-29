@@ -3,11 +3,13 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 import sequelize from './client';
 
 interface SyncedTransactionAttributes {
-  splitwiseId: string;
-  ynabId: string;
   amount: number;
   isPayment: Boolean;
   syncDate: Date;
+  splitwiseExpenseId: string;
+  ynabTransactionId: string;
+  splitwiseGroupId: string;
+  ynabBudgetId: string;
   splitwiseExpenseDate: Date;
   ynabTransactionDate: Date;
 }
@@ -23,11 +25,13 @@ class SyncedTransaction
   extends Model<SyncedTransactionAttributes>
   implements SyncedTransactionModel
 {
-  public splitwiseId!: string;
-  public ynabId!: string;
+  public splitwiseExpenseId!: string;
+  public ynabTransactionId!: string;
   public amount!: number;
   public isPayment!: Boolean;
   public syncDate!: Date;
+  public splitwiseGroupId!: string;
+  public ynabBudgetId!: string;
   public splitwiseExpenseDate!: Date;
   public ynabTransactionDate!: Date;
 
@@ -41,13 +45,13 @@ class SyncedTransaction
 
 SyncedTransaction.init(
   {
-    splitwiseId: {
+    splitwiseExpenseId: {
       type: DataTypes.TEXT,
       primaryKey: true,
       allowNull: false,
       unique: true,
     },
-    ynabId: {
+    ynabTransactionId: {
       type: DataTypes.TEXT,
       primaryKey: true,
       allowNull: false,
@@ -65,6 +69,14 @@ SyncedTransaction.init(
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+    },
+    splitwiseGroupId: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    ynabBudgetId: {
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
     splitwiseExpenseDate: {
       type: DataTypes.DATE,
