@@ -1,11 +1,16 @@
 import fetch from 'node-fetch';
 import { z } from 'zod';
-import qs from 'query-string';
+import * as qs from 'query-string';
 
 const repaymentSchema = z.object({
   from: z.number(),
   to: z.number(),
-  amount: z.string(),
+  amount: z
+    .string()
+    .refine((str) => !isNaN(Number(str)), {
+      message: 'String must parse to number',
+    })
+    .transform((str) => Number(str)),
 });
 
 const splitwiseExpenseSchema = z.object({
@@ -47,7 +52,7 @@ const splitwiseExpenseSchema = z.object({
   ]),
 });
 
-export type SplitwiseExpense = z.TypeOf<typeof splitwiseExpenseSchema>;
+export type SplitwiseExpense = z.infer<typeof splitwiseExpenseSchema>;
 
 const getExpenseByIdResponseSchema = z.object({
   expense: splitwiseExpenseSchema,
@@ -57,7 +62,7 @@ const getExpensesResponseSchema = z.object({
   expenses: z.array(splitwiseExpenseSchema),
 });
 
-export type GetExpenseByIdResponse = z.TypeOf<
+export type GetExpenseByIdResponse = z.infer<
   typeof getExpenseByIdResponseSchema
 >;
 

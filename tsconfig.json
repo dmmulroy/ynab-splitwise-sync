@@ -1,9 +1,13 @@
 {
-  "extends": "@tsconfig/recommended/tsconfig.json",
+  "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
     "allowJs": true,
     "noErrorTruncation": true,
     "strictNullChecks": true
+  },
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true
   }
 }
