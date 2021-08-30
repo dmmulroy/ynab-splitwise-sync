@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { boolean, z } from 'zod';
+import { z } from 'zod';
 import * as qs from 'query-string';
 
 const repaymentSchema = z.object({

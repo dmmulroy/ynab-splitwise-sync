@@ -42,6 +42,6 @@ describe('Splitwise Integration', () => {
 
     const { success } = await splitwise.deleteExpense(expense.id);
 
-    expect(success).toBe(true);
+    expect(success).toBeTrue();
   });
 });
