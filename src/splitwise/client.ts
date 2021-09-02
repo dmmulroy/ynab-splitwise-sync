@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import * as qs from 'query-string';
 
 const repaymentSchema = z.object({
@@ -54,6 +54,22 @@ const splitwiseExpenseSchema = z.object({
 
 export type SplitwiseExpense = z.infer<typeof splitwiseExpenseSchema>;
 
+const splitwiseApiErrorSchema = z
+  .object({
+    error: z.string().optional(),
+    errors: z
+      .object({
+        base: z.array(z.string()),
+      })
+      .optional(),
+  })
+  .refine((input) => !input.error && !input.errors, {
+    message: 'Unknown error response from Splitwise did',
+  })
+  .transform((input) => {
+    return input.error ? [input.error] : input.errors!.base;
+  });
+
 const getExpenseByIdResponseSchema = z.object({
   expense: splitwiseExpenseSchema,
 });
@@ -90,27 +106,58 @@ class SplitwiseClient implements Splitwise {
   ) {}
 
   async getExpenses(datedAfter?: Date): Promise<SplitwiseExpense[]> {
-    const query = qs.stringify({
-      group_id: this.groupId,
-      dated_after: datedAfter,
-    });
-    const response = await fetch(`${SPLITWISE_API_URL}/get_expenses?${query}`, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-    }).then((res) => res.json());
+    try {
+      const query = qs.stringify({
+        group_id: this.groupId,
+        dated_after: datedAfter,
+      });
 
-    return getExpensesResponseSchema.parse(response).expenses;
+      const response = await fetch(
+        `${SPLITWISE_API_URL}/get_expenses?${query}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+
+        const errors = splitwiseApiErrorSchema.parse(data);
+
+        throw new Error(errors.join(' | '));
+      }
+
+      const data = await response.json();
+
+      return getExpensesResponseSchema.parse(data).expenses;
+    } catch (error) {
+      throw new Error(`Splitwise Error: ${error}`);
+    }
   }
 
   async getExpenseById(id: number): Promise<SplitwiseExpense> {
-    const response = await fetch(`${SPLITWISE_API_URL}/get_expense/${id}`, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-    }).then((res) => res.json());
+    try {
+      const response = await fetch(`${SPLITWISE_API_URL}/get_expense/${id}`, {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+      });
 
-    return getExpenseByIdResponseSchema.parse(response).expense;
+      if (!response.ok) {
+        const data = await response.json();
+
+        const errors = splitwiseApiErrorSchema.parse(data);
+
+        throw new Error(errors.join(' | '));
+      }
+      const data = await response.json();
+
+      return getExpenseByIdResponseSchema.parse(data).expense;
+    } catch (error) {
+      throw new Error(`Splitwise Error: ${error}`);
+    }
   }
 
   async createExpense({
@@ -131,22 +178,45 @@ class SplitwiseClient implements Splitwise {
         date,
         split_equally: true,
       }),
-    }).then((res) => res.json());
+    });
 
-    const result = createExpenseResponseSchema.parse(response);
+    if (!response.ok) {
+      const data = await response.json();
 
-    return result.expenses[0];
+      const errors = splitwiseApiErrorSchema.parse(data);
+      throw new Error(errors.join(' | '));
+    }
+
+    const data = await response.json();
+
+    return createExpenseResponseSchema.parse(data).expenses[0];
   }
 
   async deleteExpense(id: number): Promise<{ success: boolean }> {
-    const response = await fetch(`${SPLITWISE_API_URL}/delete_expense/${id}`, {
-      method: 'post',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-    }).then((res) => res.json());
+    try {
+      const response = await fetch(
+        `${SPLITWISE_API_URL}/delete_expense/${id}`,
+        {
+          method: 'post',
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+        },
+      );
 
-    return z.object({ success: z.boolean() }).parse(response);
+      if (!response.ok) {
+        const data = await response.json();
+
+        const errors = splitwiseApiErrorSchema.parse(data);
+
+        throw new Error(errors.join(' | '));
+      }
+      const data = await response.json();
+
+      return z.object({ success: z.boolean() }).parse(data);
+    } catch (error) {
+      throw new Error(`Splitwise Error: ${error}`);
+    }
   }
 }
 
