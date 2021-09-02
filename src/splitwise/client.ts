@@ -63,8 +63,8 @@ const splitwiseApiErrorSchema = z
       })
       .optional(),
   })
-  .refine((input) => !input.error && !input.errors, {
-    message: 'Unknown error response from Splitwise did',
+  .refine((input) => !input.error || !input.errors, {
+    message: 'Unknown error response from Splitwise',
   })
   .transform((input) => {
     return input.error ? [input.error] : input.errors!.base;
@@ -133,7 +133,7 @@ class SplitwiseClient implements Splitwise {
 
       return getExpensesResponseSchema.parse(data).expenses;
     } catch (error) {
-      throw new Error(`Splitwise Error: ${error}`);
+      throw new Error(`Splitwise Error: ${error.message}`);
     }
   }
 
@@ -156,7 +156,7 @@ class SplitwiseClient implements Splitwise {
 
       return getExpenseByIdResponseSchema.parse(data).expense;
     } catch (error) {
-      throw new Error(`Splitwise Error: ${error}`);
+      throw new Error(`Splitwise Error: ${error.message}`);
     }
   }
 
@@ -165,31 +165,35 @@ class SplitwiseClient implements Splitwise {
     description,
     date,
   }: CreateExpenseParams): Promise<SplitwiseExpense> {
-    const response = await fetch(`${SPLITWISE_API_URL}/create_expense`, {
-      method: 'post',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        group_id: this.groupId,
-        cost: cost.toString(),
-        description,
-        date,
-        split_equally: true,
-      }),
-    });
+    try {
+      const response = await fetch(`${SPLITWISE_API_URL}/create_expense`, {
+        method: 'post',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          group_id: this.groupId,
+          cost: cost.toString(),
+          description,
+          date,
+          split_equally: true,
+        }),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        const data = await response.json();
+
+        const errors = splitwiseApiErrorSchema.parse(data);
+        throw new Error(errors.join(' | '));
+      }
+
       const data = await response.json();
 
-      const errors = splitwiseApiErrorSchema.parse(data);
-      throw new Error(errors.join(' | '));
+      return createExpenseResponseSchema.parse(data).expenses[0];
+    } catch (error) {
+      throw new Error(`Splitwise Error: ${error.message}`);
     }
-
-    const data = await response.json();
-
-    return createExpenseResponseSchema.parse(data).expenses[0];
   }
 
   async deleteExpense(id: number): Promise<{ success: boolean }> {
@@ -215,7 +219,7 @@ class SplitwiseClient implements Splitwise {
 
       return z.object({ success: z.boolean() }).parse(data);
     } catch (error) {
-      throw new Error(`Splitwise Error: ${error}`);
+      throw new Error(`Splitwise Error: ${error.message}`);
     }
   }
 }
