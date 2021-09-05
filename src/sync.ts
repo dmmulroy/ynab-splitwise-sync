@@ -4,6 +4,7 @@ import SyncedTransactionService, {
   ISyncedTransactionService,
 } from './services/syncedTransactionService';
 import initializeDatabase from './db/initialize';
+import YnabClient from './ynab/client';
 
 export interface SyncConfig {
   splitwiseApiKey: string;
@@ -11,6 +12,7 @@ export interface SyncConfig {
   splitwiseUserId: number;
   ynabApiKey: string;
   ynabBudgetId: string;
+  ynabSplitwiseAccountId: string;
   databaseUrl: string;
 }
 
@@ -20,7 +22,7 @@ export interface Syncer {
 
 class Sync implements Syncer {
   private readonly splitwise: SplitwiseClient;
-  private readonly ynab: ynab.API;
+  private readonly ynab: YnabClient;
   private readonly syncedTransactionService: ISyncedTransactionService;
 
   constructor({
@@ -29,6 +31,7 @@ class Sync implements Syncer {
     splitwiseUserId,
     ynabApiKey,
     ynabBudgetId,
+    ynabSplitwiseAccountId,
     databaseUrl,
   }: SyncConfig) {
     this.splitwise = new SplitwiseClient({
@@ -36,7 +39,12 @@ class Sync implements Syncer {
       groupId: splitwiseGroupId,
       userId: splitwiseUserId,
     });
-    this.ynab = new ynab.API(ynabApiKey);
+    this.ynab = new YnabClient({
+      apiKey: ynabApiKey,
+      budgetId: ynabBudgetId,
+      splitwiseAccountId: ynabSplitwiseAccountId,
+      uncategorizedCategoryId: 'TODO',
+    });
     this.syncedTransactionService = new SyncedTransactionService();
 
     initializeDatabase(databaseUrl);
@@ -45,6 +53,8 @@ class Sync implements Syncer {
   async sync() {}
 
   private async reconcileUnpaidSyncedTransactions(): Promise<void> {
+    let ynabTransactionUpdates: { id: string; amount: number; memo: string }[] =
+      [];
     const unpaidSyncedTransactions =
       await this.syncedTransactionService.getUnpaidSyncedTransactions();
 
@@ -63,6 +73,12 @@ class Sync implements Syncer {
       }
 
       syncedTransaction.syncDate = new Date();
+
+      // ynabTransactionUpdates.push({
+      //   id: syncedTransaction.ynabTransactionId,
+      //   amount: ,
+      //   memo:
+      // });
 
       // Get YNAB transaction
       // Update amount and description

@@ -13,6 +13,9 @@ export type YnabTransaction = TransactionDetail;
 
 export interface Ynab {
   getTransactionById(id: string): Promise<YnabTransaction | null>;
+  updateTransactions(
+    transactions: YnabTransaction[],
+  ): Promise<YnabTransaction[]>;
 }
 
 export interface YnabClientConfig {
@@ -54,4 +57,20 @@ class YnabClient implements Ynab {
       throw new Error(`YNAB Error: ${ynabError.description}`);
     }
   }
+
+  async updateTransactions(transactions: YnabTransaction[]) {
+    try {
+      const { data } = await this.ynab.transactions.updateTransactions(
+        this.budgetId,
+        { transactions },
+      );
+
+      return data.transactions ?? [];
+    } catch (error) {
+      const { error: ynabError } = ynabErrorSchema.parse(error);
+      throw new Error(`YNAB Error: ${ynabError.description}`);
+    }
+  }
 }
+
+export default YnabClient;

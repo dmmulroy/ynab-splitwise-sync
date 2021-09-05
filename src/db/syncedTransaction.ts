@@ -1,4 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
+import { centsToDollars, centsToMiliunits } from '../currency/conversions';
 
 interface SyncedTransactionAttributes {
   amount: number;
@@ -15,6 +16,7 @@ interface SyncedTransactionAttributes {
 
 interface SyncedTransactionMethods {
   getAmountInDollars(): number;
+  getAmountInMiliunits(): number;
 }
 
 export type SyncedTransactionModel = SyncedTransactionAttributes &
@@ -26,7 +28,7 @@ class SyncedTransaction
 {
   public splitwiseExpenseId!: number;
   public ynabTransactionId!: string;
-  public amount!: number;
+  public amount!: number; // Stored as cents
   public isPayment!: Boolean;
   public description!: string;
   public syncDate!: Date;
@@ -92,7 +94,12 @@ class SyncedTransaction
   }
 
   getAmountInDollars(): number {
-    return this.amount / 1000;
+    return centsToDollars(this.amount);
+  }
+
+  // See https://api.youneedabudget.com/#formats
+  getAmountInMiliunits(): number {
+    return centsToMiliunits(this.amount);
   }
 }
 

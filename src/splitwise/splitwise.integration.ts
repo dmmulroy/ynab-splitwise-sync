@@ -1,10 +1,11 @@
 import SplitwiseClient, { SplitwiseExpense } from './client';
 
 describe('Splitwise Integration', () => {
-  const splitwise = new SplitwiseClient(
-    process.env.SPLITWISE_API_TOKEN,
-    process.env.SPLITWISE_GROUP_ID,
-  );
+  const splitwise = new SplitwiseClient({
+    apiKey: process.env.SPLITWISE_API_TOKEN,
+    groupId: process.env.SPLITWISE_GROUP_ID,
+    userId: process.env.SPLITWISE_USER_ID,
+  });
   let createdExpense: SplitwiseExpense;
 
   beforeEach(async () => {
