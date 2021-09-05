@@ -2,13 +2,15 @@ import SplitwiseClient from './splitwise/client';
 import ynab from 'ynab';
 import SyncedTransactionService, {
   ISyncedTransactionService,
-} from './service/syncedTransaction';
+} from './services/syncedTransactionService';
 import initializeDatabase from './db/initialize';
 
 export interface SyncConfig {
   splitwiseApiKey: string;
-  splitwiseGroupId: string;
+  splitwiseGroupId: number;
+  splitwiseUserId: number;
   ynabApiKey: string;
+  ynabBudgetId: string;
   databaseUrl: string;
 }
 
@@ -24,10 +26,16 @@ class Sync implements Syncer {
   constructor({
     splitwiseApiKey,
     splitwiseGroupId,
+    splitwiseUserId,
     ynabApiKey,
+    ynabBudgetId,
     databaseUrl,
   }: SyncConfig) {
-    this.splitwise = new SplitwiseClient(splitwiseApiKey, splitwiseGroupId);
+    this.splitwise = new SplitwiseClient({
+      apiKey: splitwiseApiKey,
+      groupId: splitwiseGroupId,
+      userId: splitwiseUserId,
+    });
     this.ynab = new ynab.API(ynabApiKey);
     this.syncedTransactionService = new SyncedTransactionService();
 
@@ -39,5 +47,29 @@ class Sync implements Syncer {
   private async reconcileUnpaidSyncedTransactions(): Promise<void> {
     const unpaidSyncedTransactions =
       await this.syncedTransactionService.getUnpaidSyncedTransactions();
+
+    unpaidSyncedTransactions.map(async (syncedTransaction) => {
+      const expense = await this.splitwise.getExpenseById(
+        syncedTransaction.splitwiseExpenseId,
+      );
+
+      if (expense.deleted_at) {
+        return syncedTransaction.destroy();
+      }
+
+      if (expense.updated_at) {
+        syncedTransaction.amount =
+          this.splitwise.getExpenseAmountForUser(expense);
+      }
+
+      syncedTransaction.syncDate = new Date();
+
+      // Get YNAB transaction
+      // Update amount and description
+
+      // const ynabTransaction = await this.ynab.transactions.getTransactionById(
+      //   syncedTransaction.ynabTransactionId,
+      // );
+    });
   }
 }

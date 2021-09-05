@@ -1,12 +1,11 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
-import sequelize from './client';
-
 interface SyncedTransactionAttributes {
   amount: number;
   isPayment: Boolean;
+  description: string;
   syncDate: Date;
-  splitwiseExpenseId: string;
+  splitwiseExpenseId: number;
   ynabTransactionId: string;
   splitwiseGroupId: string;
   ynabBudgetId: string;
@@ -25,10 +24,11 @@ class SyncedTransaction
   extends Model<SyncedTransactionAttributes>
   implements SyncedTransactionModel
 {
-  public splitwiseExpenseId!: string;
+  public splitwiseExpenseId!: number;
   public ynabTransactionId!: string;
   public amount!: number;
   public isPayment!: Boolean;
+  public description!: string;
   public syncDate!: Date;
   public splitwiseGroupId!: string;
   public ynabBudgetId!: string;
@@ -59,6 +59,10 @@ class SyncedTransaction
         },
         isPayment: {
           type: DataTypes.BOOLEAN,
+          allowNull: false,
+        },
+        description: {
+          type: DataTypes.TEXT,
           allowNull: false,
         },
         syncDate: {

@@ -1,10 +1,10 @@
 import { Sequelize } from 'sequelize/types';
 import SyncedTransaction from './syncedTransaction';
 
-export interface Initializable {
+export interface Initializer {
   initialize(db: Sequelize): void;
 }
 
-const models: Initializable[] = [SyncedTransaction];
+const models: Initializer[] = [SyncedTransaction];
 
 export default models;

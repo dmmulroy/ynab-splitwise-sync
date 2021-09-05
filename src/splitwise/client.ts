@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 import * as qs from 'query-string';
 
 const repaymentSchema = z.object({
@@ -96,14 +96,27 @@ export interface Splitwise {
   getExpenseById(id: number): Promise<SplitwiseExpense>;
   createExpense(expenseParams: CreateExpenseParams): Promise<SplitwiseExpense>;
   deleteExpense(id: number): Promise<{ success: boolean }>;
+  getExpenseAmountForUser(expense: SplitwiseExpense): number;
+}
+
+export interface SplitwiseClientConfig {
+  apiKey: string;
+  groupId: number;
+  userId: number;
 }
 
 const SPLITWISE_API_URL = `https://secure.splitwise.com/api/v3.0`;
+
 class SplitwiseClient implements Splitwise {
-  constructor(
-    private readonly apiKey: string,
-    private readonly groupId: string,
-  ) {}
+  private readonly apiKey: string;
+  private readonly groupId: number;
+  private readonly userId: number;
+
+  constructor({ apiKey, groupId, userId }: SplitwiseClientConfig) {
+    this.apiKey = apiKey;
+    this.groupId = groupId;
+    this.userId = userId;
+  }
 
   async getExpenses(datedAfter?: Date): Promise<SplitwiseExpense[]> {
     try {
@@ -221,6 +234,13 @@ class SplitwiseClient implements Splitwise {
     } catch (error) {
       throw new Error(`Splitwise Error: ${error.message}`);
     }
+  }
+
+  getExpenseAmountForUser(expense: SplitwiseExpense): number {
+    // Since there will only ever be two people in my splitwise group,
+    // we know we will only have repayment on each expense;
+    const { to, from, amount } = expense.repayments[0];
+    return this.userId === to ? amount * 1000 : amount * 1000 * -1;
   }
 }
 
