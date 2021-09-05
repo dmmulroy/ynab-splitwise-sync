@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import { z } from 'zod';
 import * as qs from 'query-string';
+import { dollarsToCents } from '../currency/conversions';
 
 const repaymentSchema = z.object({
   from: z.number(),
@@ -240,7 +241,8 @@ class SplitwiseClient implements Splitwise {
     // Since there will only ever be two people in my splitwise group,
     // we know we will only have repayment on each expense;
     const { to, from, amount } = expense.repayments[0];
-    return this.userId === to ? amount * 1000 : amount * 1000 * -1;
+    const amountInCents = dollarsToCents(amount);
+    return this.userId === to ? amountInCents : amountInCents * -1;
   }
 }
 
