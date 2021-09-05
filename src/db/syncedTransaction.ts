@@ -38,56 +38,58 @@ class SyncedTransaction
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
+  static initialize(sequelize: Sequelize) {
+    SyncedTransaction.init(
+      {
+        splitwiseExpenseId: {
+          type: DataTypes.TEXT,
+          primaryKey: true,
+          allowNull: false,
+          unique: true,
+        },
+        ynabTransactionId: {
+          type: DataTypes.TEXT,
+          primaryKey: true,
+          allowNull: false,
+          unique: true,
+        },
+        amount: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+        isPayment: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+        },
+        syncDate: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        splitwiseGroupId: {
+          type: DataTypes.TEXT,
+          allowNull: false,
+        },
+        ynabBudgetId: {
+          type: DataTypes.TEXT,
+          allowNull: false,
+        },
+        splitwiseExpenseDate: {
+          type: DataTypes.DATE,
+          allowNull: false,
+        },
+        ynabTransactionDate: {
+          type: DataTypes.DATE,
+          allowNull: false,
+        },
+      },
+      { sequelize, timestamps: true, underscored: true },
+    );
+  }
+
   getAmountInDollars(): number {
     return this.amount / 1000;
   }
 }
-
-SyncedTransaction.init(
-  {
-    splitwiseExpenseId: {
-      type: DataTypes.TEXT,
-      primaryKey: true,
-      allowNull: false,
-      unique: true,
-    },
-    ynabTransactionId: {
-      type: DataTypes.TEXT,
-      primaryKey: true,
-      allowNull: false,
-      unique: true,
-    },
-    amount: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    isPayment: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    syncDate: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    splitwiseGroupId: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    ynabBudgetId: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    splitwiseExpenseDate: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    ynabTransactionDate: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-  },
-  { sequelize, timestamps: true, underscored: true },
-);
 
 export default SyncedTransaction;
