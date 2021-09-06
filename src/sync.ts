@@ -4,7 +4,8 @@ import SyncedTransactionService, {
   ISyncedTransactionService,
 } from './services/syncedTransactionService';
 import initializeDatabase from './db/initialize';
-import YnabClient from './ynab/client';
+import YnabClient, { YnabTransactionUpdate } from './ynab/client';
+import SyncedTransaction from './db/syncedTransaction';
 
 export interface SyncConfig {
   splitwiseApiKey: string;
@@ -50,42 +51,66 @@ class Sync implements Syncer {
     initializeDatabase(databaseUrl);
   }
 
-  async sync() {}
+  async sync() {
+    await this.reconcileUnpaidSyncedTransactions();
+  }
 
   private async reconcileUnpaidSyncedTransactions(): Promise<void> {
-    let ynabTransactionUpdates: { id: string; amount: number; memo: string }[] =
-      [];
+    const ynabTransactionUpdates: YnabTransactionUpdate[] = [];
+    const syncedTransactionsByYnabId: Record<string, SyncedTransaction> = {};
+
     const unpaidSyncedTransactions =
       await this.syncedTransactionService.getUnpaidSyncedTransactions();
 
-    unpaidSyncedTransactions.map(async (syncedTransaction) => {
-      const expense = await this.splitwise.getExpenseById(
-        syncedTransaction.splitwiseExpenseId,
-      );
+    await Promise.all(
+      unpaidSyncedTransactions.map(async (syncedTransaction) => {
+        syncedTransaction.syncDate = new Date();
 
-      if (expense.deleted_at) {
-        return syncedTransaction.destroy();
-      }
+        const expense = await this.splitwise.getExpenseById(
+          syncedTransaction.splitwiseExpenseId,
+        );
 
-      if (expense.updated_at) {
-        syncedTransaction.amount =
-          this.splitwise.getExpenseAmountForUser(expense);
-      }
+        if (!expense.updated_by || !expense.deleted_at) {
+          await syncedTransaction.save();
+          return;
+        }
 
-      syncedTransaction.syncDate = new Date();
+        if (expense.deleted_at) {
+          ynabTransactionUpdates.push({
+            id: syncedTransaction.ynabTransactionId,
+            amount: 0,
+            memo: 'DELETED',
+          });
+        }
 
-      // ynabTransactionUpdates.push({
-      //   id: syncedTransaction.ynabTransactionId,
-      //   amount: ,
-      //   memo:
-      // });
+        if (expense.updated_by && !expense.deleted_at) {
+          syncedTransaction.amount =
+            this.splitwise.getExpenseAmountForUser(expense);
 
-      // Get YNAB transaction
-      // Update amount and description
+          syncedTransaction.description = expense.description;
 
-      // const ynabTransaction = await this.ynab.transactions.getTransactionById(
-      //   syncedTransaction.ynabTransactionId,
-      // );
-    });
+          ynabTransactionUpdates.push({
+            id: syncedTransaction.ynabTransactionId,
+            amount: syncedTransaction.getAmountInMiliunits(),
+            memo: syncedTransaction.description,
+          });
+        }
+
+        syncedTransactionsByYnabId[syncedTransaction.ynabTransactionId] =
+          syncedTransaction;
+      }),
+    );
+
+    const updatedYnabTransactions = await this.ynab.updateTransactions(
+      ynabTransactionUpdates,
+    );
+
+    await Promise.all(
+      updatedYnabTransactions.map(async (transaction) => {
+        const syncedTransaction = syncedTransactionsByYnabId[transaction.id];
+
+        await syncedTransaction.save();
+      }),
+    );
   }
 }

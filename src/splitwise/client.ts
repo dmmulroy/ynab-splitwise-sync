@@ -21,6 +21,7 @@ const splitwiseExpenseSchema = z.object({
   payment: z.boolean(),
   cost: z.string(),
   repayments: z.array(repaymentSchema),
+  updated_by: z.object({ id: z.number() }).nullable(),
   date: z
     .string()
     .refine((str) => !isNaN(Date.parse(str)), {
@@ -240,7 +241,7 @@ class SplitwiseClient implements Splitwise {
   getExpenseAmountForUser(expense: SplitwiseExpense): number {
     // Since there will only ever be two people in my splitwise group,
     // we know we will only have repayment on each expense;
-    const { to, from, amount } = expense.repayments[0];
+    const { to, amount } = expense.repayments[0];
     const amountInCents = dollarsToCents(amount);
     return this.userId === to ? amountInCents : amountInCents * -1;
   }

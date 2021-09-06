@@ -11,10 +11,15 @@ const ynabErrorSchema = z.object({
 
 export type YnabTransaction = TransactionDetail;
 
+export type YnabTransactionUpdate = Pick<
+  YnabTransaction,
+  'id' | 'amount' | 'memo'
+>;
+
 export interface Ynab {
   getTransactionById(id: string): Promise<YnabTransaction | null>;
   updateTransactions(
-    transactions: YnabTransaction[],
+    transactions: YnabTransactionUpdate[],
   ): Promise<YnabTransaction[]>;
 }
 
@@ -58,11 +63,17 @@ class YnabClient implements Ynab {
     }
   }
 
-  async updateTransactions(transactions: YnabTransaction[]) {
+  async updateTransactions(transactions: YnabTransactionUpdate[]) {
     try {
       const { data } = await this.ynab.transactions.updateTransactions(
         this.budgetId,
-        { transactions },
+        {
+          transactions: transactions.map((transaction) => ({
+            ...transaction,
+            account_id: this.splitwiseAccountId,
+            date: new Date().toISOString(),
+          })),
+        },
       );
 
       return data.transactions ?? [];
