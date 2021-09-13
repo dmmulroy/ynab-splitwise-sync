@@ -13,3 +13,7 @@ export function dollarsToCents(amount: number): number {
 export function miliunitsToCents(amount: number): number {
   return amount / 10;
 }
+
+export function dollarsToMiliunits(amount: number): number {
+  return amount * 1000;
+}

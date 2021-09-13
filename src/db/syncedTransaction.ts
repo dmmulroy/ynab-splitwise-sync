@@ -1,14 +1,14 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { centsToDollars, centsToMiliunits } from '../currency/conversions';
 
-interface SyncedTransactionAttributes {
+export interface SyncedTransactionAttributes {
   amount: number;
   isPayment: Boolean;
   description: string;
   syncDate: Date;
   splitwiseExpenseId: number;
   ynabTransactionId: string;
-  splitwiseGroupId: string;
+  splitwiseGroupId: number;
   ynabBudgetId: string;
   splitwiseExpenseDate: Date;
   ynabTransactionDate: Date;
@@ -32,7 +32,7 @@ class SyncedTransaction
   public isPayment!: Boolean;
   public description!: string;
   public syncDate!: Date;
-  public splitwiseGroupId!: string;
+  public splitwiseGroupId!: number;
   public ynabBudgetId!: string;
   public splitwiseExpenseDate!: Date;
   public ynabTransactionDate!: Date;
@@ -73,7 +73,7 @@ class SyncedTransaction
           defaultValue: DataTypes.NOW,
         },
         splitwiseGroupId: {
-          type: DataTypes.TEXT,
+          type: DataTypes.INTEGER,
           allowNull: false,
         },
         ynabBudgetId: {
@@ -89,7 +89,18 @@ class SyncedTransaction
           allowNull: false,
         },
       },
-      { sequelize, timestamps: true, underscored: true },
+      {
+        sequelize,
+        timestamps: true,
+        underscored: true,
+        indexes: [
+          {
+            name: 'splitwise_group_id_index',
+            fields: ['splitwise_group_id'],
+            using: 'HASH',
+          },
+        ],
+      },
     );
   }
 

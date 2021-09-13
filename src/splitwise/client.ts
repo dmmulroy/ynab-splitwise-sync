@@ -34,15 +34,12 @@ const splitwiseExpenseSchema = z.object({
       message: 'String must parse to Date',
     })
     .transform((str) => new Date(str)),
-  updated_at: z.union([
-    z
-      .string()
-      .refine((str) => !isNaN(Date.parse(str)), {
-        message: 'String must parse to Date',
-      })
-      .transform((str) => new Date(str)),
-    z.null(),
-  ]),
+  updated_at: z
+    .string()
+    .refine((str) => !isNaN(Date.parse(str)), {
+      message: 'String must parse to Date',
+    })
+    .transform((str) => new Date(str)),
   deleted_at: z.union([
     z
       .string()
@@ -93,8 +90,9 @@ export interface CreateExpenseParams {
   description: string;
   date?: Date;
 }
+
 export interface Splitwise {
-  getExpenses(datedAfter?: Date): Promise<SplitwiseExpense[]>;
+  getExpenses(updatedAfter?: Date): Promise<SplitwiseExpense[]>;
   getExpenseById(id: number): Promise<SplitwiseExpense>;
   createExpense(expenseParams: CreateExpenseParams): Promise<SplitwiseExpense>;
   deleteExpense(id: number): Promise<{ success: boolean }>;
@@ -120,11 +118,11 @@ class SplitwiseClient implements Splitwise {
     this.userId = userId;
   }
 
-  async getExpenses(datedAfter?: Date): Promise<SplitwiseExpense[]> {
+  async getExpenses(updatedAfter?: Date): Promise<SplitwiseExpense[]> {
     try {
       const query = qs.stringify({
         group_id: this.groupId,
-        dated_after: datedAfter,
+        updated_after: updatedAfter,
       });
 
       const response = await fetch(

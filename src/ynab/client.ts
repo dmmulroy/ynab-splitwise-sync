@@ -11,16 +11,24 @@ const ynabErrorSchema = z.object({
 
 export type YnabTransaction = TransactionDetail;
 
-export type YnabTransactionUpdate = Pick<
+export type UpdateYnabTransaction = Pick<
   YnabTransaction,
   'id' | 'amount' | 'memo'
 >;
 
+export type CreateYnabTransaction = Pick<YnabTransaction, 'amount' | 'memo'> & {
+  date: Date;
+};
+
 export interface Ynab {
   getTransactionById(id: string): Promise<YnabTransaction | null>;
   updateTransactions(
-    transactions: YnabTransactionUpdate[],
+    transactions: UpdateYnabTransaction[],
   ): Promise<YnabTransaction[]>;
+  createTransactions(
+    transactions: CreateYnabTransaction[],
+  ): Promise<YnabTransaction[]>;
+  getBudgetId(): string;
 }
 
 export interface YnabClientConfig {
@@ -28,6 +36,7 @@ export interface YnabClientConfig {
   budgetId: string;
   splitwiseAccountId: string;
   uncategorizedCategoryId: string;
+  payeeName: string;
 }
 
 class YnabClient implements Ynab {
@@ -35,6 +44,7 @@ class YnabClient implements Ynab {
   private readonly budgetId: string;
   private readonly splitwiseAccountId: string;
   private readonly uncategorizedCategoryId: string;
+  private readonly payeeName: string;
   private readonly ynab: ynab.API;
 
   constructor({
@@ -42,11 +52,13 @@ class YnabClient implements Ynab {
     budgetId,
     splitwiseAccountId,
     uncategorizedCategoryId,
+    payeeName,
   }: YnabClientConfig) {
     this.apiKey = apiKey;
     this.budgetId = budgetId;
     this.splitwiseAccountId = splitwiseAccountId;
     this.uncategorizedCategoryId = uncategorizedCategoryId;
+    this.payeeName = payeeName;
     this.ynab = new ynab.API(this.apiKey);
   }
 
@@ -63,7 +75,7 @@ class YnabClient implements Ynab {
     }
   }
 
-  async updateTransactions(transactions: YnabTransactionUpdate[]) {
+  async updateTransactions(transactions: UpdateYnabTransaction[]) {
     try {
       const { data } = await this.ynab.transactions.updateTransactions(
         this.budgetId,
@@ -81,6 +93,35 @@ class YnabClient implements Ynab {
       const { error: ynabError } = ynabErrorSchema.parse(error);
       throw new Error(`YNAB Error: ${ynabError.description}`);
     }
+  }
+
+  async createTransactions(
+    transactions: CreateYnabTransaction[],
+  ): Promise<YnabTransaction[]> {
+    try {
+      const { data } = await this.ynab.transactions.createTransactions(
+        this.budgetId,
+        {
+          transactions: transactions.map(({ memo, amount, date }) => ({
+            memo,
+            amount,
+            date: date.toISOString(),
+            account_id: this.splitwiseAccountId,
+            category_id: this.uncategorizedCategoryId,
+            payee_name: this.payeeName,
+          })),
+        },
+      );
+
+      return data.transactions ?? [];
+    } catch (error) {
+      const { error: ynabError } = ynabErrorSchema.parse(error);
+      throw new Error(`YNAB Error: ${ynabError.description}`);
+    }
+  }
+
+  getBudgetId(): string {
+    return this.budgetId;
   }
 }
 
