@@ -38,7 +38,6 @@ export interface YnabClientConfig {
   budgetId: string;
   splitwiseAccountId: string;
   uncategorizedCategoryId: string;
-  payeeName: string;
 }
 
 class YnabClient implements Ynab {
@@ -46,7 +45,6 @@ class YnabClient implements Ynab {
   private readonly budgetId: string;
   private readonly splitwiseAccountId: string;
   private readonly uncategorizedCategoryId: string;
-  private readonly payeeName: string;
   private readonly ynab: ynab.API;
 
   constructor({
@@ -54,13 +52,11 @@ class YnabClient implements Ynab {
     budgetId,
     splitwiseAccountId,
     uncategorizedCategoryId,
-    payeeName,
   }: YnabClientConfig) {
     this.apiKey = apiKey;
     this.budgetId = budgetId;
     this.splitwiseAccountId = splitwiseAccountId;
     this.uncategorizedCategoryId = uncategorizedCategoryId;
-    this.payeeName = payeeName;
     this.ynab = new ynab.API(this.apiKey);
   }
 
@@ -118,7 +114,6 @@ class YnabClient implements Ynab {
             date: date.toISOString(),
             account_id: this.splitwiseAccountId,
             category_id: this.uncategorizedCategoryId,
-            payee_name: this.payeeName,
           })),
         },
       );

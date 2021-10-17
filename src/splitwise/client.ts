@@ -3,15 +3,30 @@ import { z } from 'zod';
 import * as qs from 'query-string';
 import { dollarsToCents } from '../currency/conversions';
 
+const stringNumber = z
+  .string()
+  .refine((str) => !isNaN(Number(str)), {
+    message: 'String must parse to number',
+  })
+  .transform((str) => Number(str));
+
+const stringDate = z
+  .string()
+  .refine((str) => !isNaN(Date.parse(str)), {
+    message: 'String must parse to Date',
+  })
+  .transform((str) => new Date(str));
+
 const repaymentSchema = z.object({
   from: z.number(),
   to: z.number(),
-  amount: z
-    .string()
-    .refine((str) => !isNaN(Number(str)), {
-      message: 'String must parse to number',
-    })
-    .transform((str) => Number(str)),
+  amount: stringNumber,
+});
+
+const userSchema = z.object({
+  user_id: z.number(),
+  paid_share: stringNumber,
+  owed_share: stringNumber,
 });
 
 const splitwiseExpenseSchema = z.object({
@@ -22,33 +37,11 @@ const splitwiseExpenseSchema = z.object({
   cost: z.string(),
   repayments: z.array(repaymentSchema),
   updated_by: z.object({ id: z.number() }).nullable(),
-  date: z
-    .string()
-    .refine((str) => !isNaN(Date.parse(str)), {
-      message: 'String must parse to Date',
-    })
-    .transform((str) => new Date(str)),
-  created_at: z
-    .string()
-    .refine((str) => !isNaN(Date.parse(str)), {
-      message: 'String must parse to Date',
-    })
-    .transform((str) => new Date(str)),
-  updated_at: z
-    .string()
-    .refine((str) => !isNaN(Date.parse(str)), {
-      message: 'String must parse to Date',
-    })
-    .transform((str) => new Date(str)),
-  deleted_at: z.union([
-    z
-      .string()
-      .refine((str) => !isNaN(Date.parse(str)), {
-        message: 'String must parse to Date',
-      })
-      .transform((str) => new Date(str)),
-    z.null(),
-  ]),
+  date: stringDate,
+  created_at: stringDate,
+  updated_at: stringDate,
+  deleted_at: z.union([stringDate, z.null()]),
+  users: z.array(userSchema),
 });
 
 export type SplitwiseExpense = z.infer<typeof splitwiseExpenseSchema>;
@@ -237,11 +230,16 @@ class SplitwiseClient implements Splitwise {
   }
 
   getExpenseAmountForUser(expense: SplitwiseExpense): number {
-    // Since there will only ever be two people in my splitwise group,
-    // we know we will only have repayment on each expense;
-    const { to, amount } = expense.repayments[0];
-    const amountInCents = dollarsToCents(amount);
-    return this.userId === to ? amountInCents : amountInCents * -1;
+    const userExpense = expense.users.find(
+      ({ user_id }) => user_id === this.userId,
+    );
+
+    if (!userExpense) {
+      return 0;
+    }
+
+    const { paid_share, owed_share } = userExpense;
+    return dollarsToCents(paid_share - owed_share);
   }
 }
 

@@ -17,7 +17,6 @@ export interface SyncConfig {
   ynabApiKey: string;
   ynabBudgetId: string;
   ynabSplitwiseAccountId: string;
-  ynabPayeeName: string;
   ynabUncategorizedCategoryId: string;
   databaseUrl: string;
 }
@@ -34,7 +33,6 @@ export class SyncClient {
     ynabApiKey,
     ynabBudgetId,
     ynabSplitwiseAccountId,
-    ynabPayeeName,
     ynabUncategorizedCategoryId,
     databaseUrl,
   }: SyncConfig) {
@@ -48,7 +46,6 @@ export class SyncClient {
       budgetId: ynabBudgetId,
       splitwiseAccountId: ynabSplitwiseAccountId,
       uncategorizedCategoryId: ynabUncategorizedCategoryId,
-      payeeName: ynabPayeeName,
     });
     this.syncedTransactionService = new SyncedTransactionService(
       splitwiseGroupId,
