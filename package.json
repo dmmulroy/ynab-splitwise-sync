@@ -6,8 +6,9 @@
   "scripts": {
     "test": "jest --config jest.config.ts",
     "test:integration": "jest --config jest-integration.config.ts",
-    "start:dev": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node --require dotenv/config scripts/sync.ts",
-    "start": "ts-node --require dotenv/config scripts/sync.ts",
+    "sync:dev": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node --require dotenv/config scripts/sync.ts",
+    "start": "echo 'Use `npm run sync` to run this app.'",
+    "sync": "ts-node --require dotenv/config scripts/sync.ts",
     "sync-db:destructive": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node scripts/sync-db-destructive.ts"
   },
   "author": "",
