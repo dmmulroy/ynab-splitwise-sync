@@ -2,11 +2,12 @@
   "name": "ynab-splitwise-sync",
   "version": "0.0.1",
   "description": "Sync SplitWise transactions to You Need A Budget",
-  "main": "src/index.js",
+  "main": "scripts/sync.ts",
   "scripts": {
     "test": "jest --config jest.config.ts",
     "test:integration": "jest --config jest-integration.config.ts",
-    "start": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node --require dotenv/config scripts/sync.ts",
+    "start:dev": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node --require dotenv/config scripts/sync.ts",
+    "start": "ts-node --require dotenv/config scripts/sync.ts",
     "sync-db:destructive": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node scripts/sync-db-destructive.ts"
   },
   "author": "",

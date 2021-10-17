@@ -142,6 +142,12 @@ class YnabClient implements Ynab {
 
       return Boolean(deletedTransaction);
     } catch (error) {
+      // Since we call this.updateTransactions there is a chance to alread throw
+      // a YNAB Error.
+      if (error?.message?.includes('YNAB Error:')) {
+        throw error;
+      }
+
       const { error: ynabError } = ynabErrorSchema.parse(error);
       throw new Error(`YNAB Error: ${ynabError.detail}`);
     }

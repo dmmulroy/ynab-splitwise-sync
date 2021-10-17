@@ -131,7 +131,7 @@ export class SyncClient {
     // Updated Expenses
     const updatedYnabExpenses: UpdateYnabTransaction[] = [];
 
-    updatedExpenses.forEach(async (expense) => {
+    for (let expense of updatedExpenses) {
       const syncedTransaction =
         await this.syncedTransactionService.findBySplitwiseExpenseId(
           expense.id,
@@ -153,7 +153,7 @@ export class SyncClient {
           amount: updatedAmount,
         });
       }
-    });
+    }
 
     await this.ynab.updateTransactions(updatedYnabExpenses);
 
