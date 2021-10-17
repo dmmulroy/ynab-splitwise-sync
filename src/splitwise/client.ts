@@ -122,7 +122,7 @@ class SplitwiseClient implements Splitwise {
     try {
       const query = qs.stringify({
         group_id: this.groupId,
-        updated_after: updatedAfter,
+        updated_after: updatedAfter?.toISOString(),
       });
 
       const response = await fetch(

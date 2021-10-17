@@ -3,8 +3,8 @@ declare global {
     interface ProcessEnv {
       DATABASE_URL: string;
       SPLITWISE_API_TOKEN: string;
-      SPLITWISE_GROUP_ID: number;
-      SPLITWISE_USER_ID: number;
+      SPLITWISE_GROUP_ID: string;
+      SPLITWISE_USER_ID: string;
       YNAB_PAYEE_NAME: string;
       YNAB_API_TOKEN: string;
       YNAB_UNCATEGORIZED_ID: string;

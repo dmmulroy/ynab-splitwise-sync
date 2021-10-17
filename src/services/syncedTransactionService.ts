@@ -1,13 +1,9 @@
-import { realpathSync } from 'fs';
-import { Op } from 'sequelize';
 import SyncedTransaction, {
   SyncedTransactionAttributes,
 } from '../db/syncedTransaction';
 
 export interface ISyncedTransactionService {
   getMostRecentSyncedTransaction(): Promise<SyncedTransaction | null>;
-  getUnpaidSyncedTransactions(): Promise<SyncedTransaction[]>;
-  getMostRecentSyncedPayment(): Promise<SyncedTransaction | null>;
   getMostRecentSyncDate(): Promise<Date | null>;
   createSyncedTransaction(
     params: SyncedTransactionAttributes,
@@ -15,6 +11,10 @@ export interface ISyncedTransactionService {
   updateSyncedTransaction(
     params: UpdateParams,
   ): Promise<SyncedTransaction | null>;
+  findBySplitwiseExpenseId(id: number): Promise<SyncedTransaction | null>;
+  deleteSyncedTransaction(
+    syncedTransaction: SyncedTransaction,
+  ): Promise<boolean>;
 }
 
 type UpdateParams = Partial<
@@ -23,44 +23,27 @@ type UpdateParams = Partial<
   Pick<SyncedTransactionAttributes, 'splitwiseExpenseId' | 'ynabTransactionId'>;
 
 class SyncedTransactionService implements ISyncedTransactionService {
-  constructor(private readonly splitwiseGroupId: number) {}
-  async getMostRecentSyncedPayment() {
-    return SyncedTransaction.findOne({
-      where: {
-        isPayment: true,
-        splitwiseGroupId: this.splitwiseGroupId,
-      },
-      order: [['sync_date', 'DESC']],
-    });
-  }
-
-  async getUnpaidSyncedTransactions() {
-    const mostRecentPayment = await this.getMostRecentSyncedPayment();
-
-    if (mostRecentPayment) {
-      return await SyncedTransaction.findAll({
-        where: {
-          splitwiseExpenseDate: {
-            [Op.gt]: mostRecentPayment.splitwiseExpenseDate,
-          },
-          splitwiseGroupId: this.splitwiseGroupId,
-        },
-      });
-    }
-
-    return SyncedTransaction.findAll();
-  }
+  constructor(
+    private readonly splitwiseGroupId: number,
+    private readonly ynabBudgetId: string,
+  ) {}
 
   async getMostRecentSyncedTransaction() {
     return SyncedTransaction.findOne({
-      where: { splitwiseGroupId: this.splitwiseGroupId },
+      where: {
+        splitwiseGroupId: this.splitwiseGroupId,
+        ynabBudgetId: this.ynabBudgetId,
+      },
       order: [['sync_date', 'DESC']],
     });
   }
 
   async getMostRecentSyncDate() {
     const syncedTransaction = await SyncedTransaction.findOne({
-      where: { splitwiseGroupId: this.splitwiseGroupId },
+      where: {
+        splitwiseGroupId: this.splitwiseGroupId,
+        ynabBudgetId: this.ynabBudgetId,
+      },
       order: [['sync_date', 'DESC']],
     });
 
@@ -80,6 +63,8 @@ class SyncedTransactionService implements ISyncedTransactionService {
   ): Promise<SyncedTransaction | null> {
     const syncedTransaction = await SyncedTransaction.findOne({
       where: {
+        splitwiseGroupId: this.splitwiseGroupId,
+        ynabBudgetId: this.ynabBudgetId,
         ynabTransactionId: params.ynabTransactionId,
         splitwiseExpenseId: params.splitwiseExpenseId,
       },
@@ -97,7 +82,28 @@ class SyncedTransactionService implements ISyncedTransactionService {
       syncedTransaction.description = params.description;
     }
 
+    await syncedTransaction.save();
+
     return syncedTransaction;
+  }
+
+  async findBySplitwiseExpenseId(
+    id: number,
+  ): Promise<SyncedTransaction | null> {
+    return SyncedTransaction.findOne({
+      where: {
+        splitwiseGroupId: this.splitwiseGroupId,
+        ynabBudgetId: this.ynabBudgetId,
+        splitwiseExpenseId: id,
+      },
+    });
+  }
+
+  async deleteSyncedTransaction(
+    syncedTransaction: SyncedTransaction,
+  ): Promise<boolean> {
+    await syncedTransaction.destroy();
+    return true;
   }
 }
 

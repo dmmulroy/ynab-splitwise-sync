@@ -1,5 +1,4 @@
 import SplitwiseClient, { SplitwiseExpense } from './splitwise/client';
-import ynab from 'ynab';
 import SyncedTransactionService, {
   ISyncedTransactionService,
 } from './services/syncedTransactionService';
@@ -8,12 +7,7 @@ import YnabClient, {
   CreateYnabTransaction,
   UpdateYnabTransaction,
 } from './ynab/client';
-import SyncedTransaction from './db/syncedTransaction';
-import {
-  centsToMiliunits,
-  dollarsToCents,
-  dollarsToMiliunits,
-} from './currency/conversions';
+import { centsToMiliunits } from './currency/conversions';
 import extractSWIDfromMemo from './services/extractSWIDfromMemo';
 
 export interface SyncConfig {
@@ -28,7 +22,7 @@ export interface SyncConfig {
   databaseUrl: string;
 }
 
-class Sync {
+export class SyncClient {
   private readonly splitwise: SplitwiseClient;
   private readonly ynab: YnabClient;
   private readonly syncedTransactionService: ISyncedTransactionService;
@@ -58,6 +52,7 @@ class Sync {
     });
     this.syncedTransactionService = new SyncedTransactionService(
       splitwiseGroupId,
+      ynabBudgetId,
     );
 
     initializeDatabase(databaseUrl);
@@ -67,31 +62,38 @@ class Sync {
     const mostRecentSyncDate =
       await this.syncedTransactionService.getMostRecentSyncDate();
 
+    const isInitialSync = !Boolean(mostRecentSyncDate);
+
     const splitwiseExpenses = await this.splitwise.getExpenses(
       mostRecentSyncDate ?? undefined,
     );
 
     const newExpenses: SplitwiseExpense[] = [];
     const updatedExpenses: SplitwiseExpense[] = [];
-    const deleteExpenses: SplitwiseExpense[] = [];
+    const deletedExpenses: SplitwiseExpense[] = [];
     const expensesById: { [key: string]: SplitwiseExpense } = {};
 
-    splitwiseExpenses.forEach((expense) => {
-      expensesById[expense.id] = expense;
-
-      if (expense.created_at === expense.updated_at) {
-        newExpenses.push(expense);
-        return;
+    for (let expense of splitwiseExpenses) {
+      if (isInitialSync && expense.payment) {
+        break;
       }
 
-      if (expense.deleted_at) {
-        deleteExpenses.push(expense);
-        return;
+      expensesById[expense.id] = expense;
+
+      if (expense.created_at.getTime() === expense.updated_at.getTime()) {
+        newExpenses.push(expense);
+        continue;
+      }
+
+      if (expense.deleted_at && !isInitialSync) {
+        deletedExpenses.push(expense);
+        continue;
       }
 
       updatedExpenses.push(expense);
-    });
+    }
 
+    // New Expenses
     const newYnabTransactions = newExpenses.map<CreateYnabTransaction>(
       (expense) => ({
         amount: centsToMiliunits(
@@ -126,8 +128,53 @@ class Sync {
       }),
     );
 
-    updatedExpenses.map(async (expense) => {
-      // await this.syncedTransactionService.updateSyncedTransaction()
+    // Updated Expenses
+    const updatedYnabExpenses: UpdateYnabTransaction[] = [];
+
+    updatedExpenses.forEach(async (expense) => {
+      const syncedTransaction =
+        await this.syncedTransactionService.findBySplitwiseExpenseId(
+          expense.id,
+        );
+
+      if (syncedTransaction) {
+        const updatedAmount = centsToMiliunits(
+          this.splitwise.getExpenseAmountForUser(expense),
+        );
+
+        updatedYnabExpenses.push({
+          id: syncedTransaction.ynabTransactionId,
+          amount: updatedAmount,
+        });
+
+        await this.syncedTransactionService.updateSyncedTransaction({
+          splitwiseExpenseId: expense.id,
+          ynabTransactionId: syncedTransaction.ynabTransactionId,
+          amount: updatedAmount,
+        });
+      }
     });
+
+    await this.ynab.updateTransactions(updatedYnabExpenses);
+
+    // Deleted Expenses
+    await Promise.all(
+      deletedExpenses.map(async (expense) => {
+        const syncedTransaction =
+          await this.syncedTransactionService.findBySplitwiseExpenseId(
+            expense.id,
+          );
+
+        if (syncedTransaction) {
+          await this.ynab.deleteTransactionById(
+            syncedTransaction.ynabTransactionId,
+          );
+
+          await this.syncedTransactionService.deleteSyncedTransaction(
+            syncedTransaction,
+          );
+        }
+      }),
+    );
   }
 }

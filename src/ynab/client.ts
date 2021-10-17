@@ -1,11 +1,12 @@
-import ynab, { TransactionDetail } from 'ynab';
+import * as ynab from 'ynab';
+import type { TransactionDetail } from 'ynab';
 import { z } from 'zod';
 
 const ynabErrorSchema = z.object({
   error: z.object({
     id: z.string(),
     name: z.string(),
-    description: z.string(),
+    detail: z.string(),
   }),
 });
 
@@ -29,6 +30,7 @@ export interface Ynab {
     transactions: CreateYnabTransaction[],
   ): Promise<YnabTransaction[]>;
   getBudgetId(): string;
+  deleteTransactionById(id: string): Promise<boolean>;
 }
 
 export interface YnabClientConfig {
@@ -71,11 +73,15 @@ class YnabClient implements Ynab {
       return data.transaction;
     } catch (error) {
       const { error: ynabError } = ynabErrorSchema.parse(error);
-      throw new Error(`YNAB Error: ${ynabError.description}`);
+      throw new Error(`YNAB Error: ${ynabError.detail}`);
     }
   }
 
   async updateTransactions(transactions: UpdateYnabTransaction[]) {
+    if (transactions.length === 0) {
+      return [];
+    }
+
     try {
       const { data } = await this.ynab.transactions.updateTransactions(
         this.budgetId,
@@ -91,13 +97,17 @@ class YnabClient implements Ynab {
       return data.transactions ?? [];
     } catch (error) {
       const { error: ynabError } = ynabErrorSchema.parse(error);
-      throw new Error(`YNAB Error: ${ynabError.description}`);
+      throw new Error(`YNAB Error: ${ynabError.detail}`);
     }
   }
 
   async createTransactions(
     transactions: CreateYnabTransaction[],
   ): Promise<YnabTransaction[]> {
+    if (transactions.length === 0) {
+      return [];
+    }
+
     try {
       const { data } = await this.ynab.transactions.createTransactions(
         this.budgetId,
@@ -116,12 +126,25 @@ class YnabClient implements Ynab {
       return data.transactions ?? [];
     } catch (error) {
       const { error: ynabError } = ynabErrorSchema.parse(error);
-      throw new Error(`YNAB Error: ${ynabError.description}`);
+      throw new Error(`YNAB Error: ${ynabError.detail}`);
     }
   }
 
   getBudgetId(): string {
     return this.budgetId;
+  }
+
+  async deleteTransactionById(id: string): Promise<boolean> {
+    try {
+      const [deletedTransaction] = await this.updateTransactions([
+        { id, amount: 0, memo: 'DELETED' },
+      ]);
+
+      return Boolean(deletedTransaction);
+    } catch (error) {
+      const { error: ynabError } = ynabErrorSchema.parse(error);
+      throw new Error(`YNAB Error: ${ynabError.detail}`);
+    }
   }
 }
 

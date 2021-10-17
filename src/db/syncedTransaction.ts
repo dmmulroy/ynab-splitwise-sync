@@ -44,7 +44,7 @@ class SyncedTransaction
     SyncedTransaction.init(
       {
         splitwiseExpenseId: {
-          type: DataTypes.TEXT,
+          type: DataTypes.INTEGER,
           primaryKey: true,
           allowNull: false,
           unique: true,
@@ -95,9 +95,8 @@ class SyncedTransaction
         underscored: true,
         indexes: [
           {
-            name: 'splitwise_group_id_index',
-            fields: ['splitwise_group_id'],
-            using: 'HASH',
+            name: 'group_budget_id_index',
+            fields: ['splitwise_group_id', 'ynab_budget_id'],
           },
         ],
       },
