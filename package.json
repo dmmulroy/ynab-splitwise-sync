@@ -7,7 +7,7 @@
     "test": "jest --config jest.config.ts",
     "test:integration": "jest --config jest-integration.config.ts",
     "sync:dev": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node --require dotenv/config scripts/sync.ts",
-    "start": "echo 'Use `npm run sync` to run this app.'",
+    "start": "npm run sync",
     "sync": "ts-node --require dotenv/config scripts/sync.ts",
     "sync-db:destructive": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node scripts/sync-db-destructive.ts"
   },
@@ -20,7 +20,8 @@
     "query-string": "^7.0.1",
     "sequelize": "^6.6.5",
     "ynab": "^1.25.0",
-    "zod": "^3.8.1"
+    "zod": "^3.8.1",
+    "ts-node": "^10.2.1"
   },
   "devDependencies": {
     "@tsconfig/node14": "^1.0.1",
@@ -38,7 +39,6 @@
     "jest-extended": "^0.11.5",
     "prettier": "^2.3.2",
     "ts-jest": "^27.0.5",
-    "ts-node": "^10.2.1",
     "typescript": "^4.3.5"
   }
 }
