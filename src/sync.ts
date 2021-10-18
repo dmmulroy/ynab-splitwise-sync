@@ -79,7 +79,7 @@ export class SyncClient {
 
       if (
         expense.created_at.getTime() === expense.updated_at.getTime() ||
-        isInitialSync
+        (isInitialSync && !expense.deleted_at)
       ) {
         newExpenses.push(expense);
         continue;
