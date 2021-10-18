@@ -77,7 +77,10 @@ export class SyncClient {
 
       expensesById[expense.id] = expense;
 
-      if (expense.created_at.getTime() === expense.updated_at.getTime()) {
+      if (
+        expense.created_at.getTime() === expense.updated_at.getTime() ||
+        isInitialSync
+      ) {
         newExpenses.push(expense);
         continue;
       }
