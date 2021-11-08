@@ -239,7 +239,7 @@ class SplitwiseClient implements Splitwise {
     }
 
     const { paid_share, owed_share } = userExpense;
-    return dollarsToCents(paid_share - owed_share);
+    return dollarsToCents(Math.round((paid_share - owed_share + Number.EPSILON) * 100) / 100);
   }
 }
 
