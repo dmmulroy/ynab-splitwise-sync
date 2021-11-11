@@ -5,7 +5,7 @@ let client: Sequelize;
 function createNewPostgresClient(databaseUrl: string): Sequelize {
   if (client) return client;
 
-  return new Sequelize(databaseUrl, {
+  client = new Sequelize(databaseUrl, {
     dialect: 'postgres',
     dialectOptions: {
       ssl: {
@@ -13,6 +13,8 @@ function createNewPostgresClient(databaseUrl: string): Sequelize {
       },
     },
   });
+
+  return client;
 }
 
 export default createNewPostgresClient;
