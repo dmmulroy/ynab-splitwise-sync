@@ -10,6 +10,7 @@ import { SyncClient } from '../src/sync';
     ynabBudgetId: process.env.YNAB_BUDGET_ID,
     ynabSplitwiseAccountId: process.env.YNAB_SPLITWISE_ACCOUNT_ID,
     ynabUncategorizedCategoryId: process.env.YNAB_UNCATEGORIZED_ID,
+    ynabPayeeName: process.env.YNAB_PAYEE_NAME,
   });
 
   await client.sync();

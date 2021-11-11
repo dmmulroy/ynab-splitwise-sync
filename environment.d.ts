@@ -9,6 +9,7 @@ declare global {
       YNAB_UNCATEGORIZED_ID: string;
       YNAB_SPLITWISE_ACCOUNT_ID: string;
       YNAB_BUDGET_ID: string;
+      YNAB_PAYEE_NAME?: string;
     }
   }
 }
