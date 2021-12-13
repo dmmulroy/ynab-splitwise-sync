@@ -80,6 +80,21 @@ export class SyncClient {
 
       expensesById[expense.id] = expense;
 
+      if (expense.payment) {
+        const existingPayment =
+          await this.syncedTransactionService.findBySplitwiseExpenseId(
+            expense.id,
+          );
+
+        if (existingPayment) {
+          updatedExpenses.push(expense);
+        } else {
+          newExpenses.push(expense);
+        }
+
+        continue;
+      }
+
       if (
         expense.created_at.getTime() === expense.updated_at.getTime() ||
         (isInitialSync && !expense.deleted_at)
