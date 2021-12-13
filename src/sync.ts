@@ -80,6 +80,9 @@ export class SyncClient {
 
       expensesById[expense.id] = expense;
 
+      // For some reason when a payment is made with venmo, the initial createdAt & updateAt
+      // timestamps are not the same. This is how I was previously testing to see
+      // if a transaction was new or updated.
       if (expense.payment) {
         const existingPayment =
           await this.syncedTransactionService.findBySplitwiseExpenseId(
