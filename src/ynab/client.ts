@@ -115,7 +115,7 @@ class YnabClient implements Ynab {
           transactions: transactions.map(({ memo, amount, date }) => ({
             memo,
             amount,
-            date: date.toISOString(),
+            date: date.toISOString().split('T')[0],
             account_id: this.splitwiseAccountId,
             category_id: this.uncategorizedCategoryId,
             payee_name: this.payeeName,

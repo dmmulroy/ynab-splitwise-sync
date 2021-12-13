@@ -3,8 +3,8 @@ import SplitwiseClient, { SplitwiseExpense } from './client';
 describe('Splitwise Integration', () => {
   const splitwise = new SplitwiseClient({
     apiKey: process.env.SPLITWISE_API_TOKEN,
-    groupId: process.env.SPLITWISE_GROUP_ID,
-    userId: process.env.SPLITWISE_USER_ID,
+    groupId: Number(process.env.SPLITWISE_GROUP_ID),
+    userId: Number(process.env.SPLITWISE_USER_ID),
   });
   let createdExpense: SplitwiseExpense;
 
