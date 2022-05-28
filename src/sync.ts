@@ -114,6 +114,37 @@ export class SyncClient {
       updatedExpenses.push(expense);
     }
 
+    // Updated Expenses
+    const updatedYnabExpenses: UpdateYnabTransaction[] = [];
+
+    for (let expense of updatedExpenses) {
+      const syncedTransaction =
+        await this.syncedTransactionService.findBySplitwiseExpenseId(
+          expense.id,
+        );
+
+      if (syncedTransaction) {
+        const updatedAmount = centsToMiliunits(
+          this.splitwise.getExpenseAmountForUser(expense),
+        );
+
+        updatedYnabExpenses.push({
+          id: syncedTransaction.ynabTransactionId,
+          amount: updatedAmount,
+        });
+
+        await this.syncedTransactionService.updateSyncedTransaction({
+          splitwiseExpenseId: expense.id,
+          ynabTransactionId: syncedTransaction.ynabTransactionId,
+          amount: updatedAmount,
+        });
+      } else {
+        newExpenses.push(expense);
+      }
+    }
+
+    await this.ynab.updateTransactions(updatedYnabExpenses);
+
     // New Expenses
     const newYnabTransactions = newExpenses.map<CreateYnabTransaction>(
       (expense) => ({
@@ -148,35 +179,6 @@ export class SyncClient {
         });
       }),
     );
-
-    // Updated Expenses
-    const updatedYnabExpenses: UpdateYnabTransaction[] = [];
-
-    for (let expense of updatedExpenses) {
-      const syncedTransaction =
-        await this.syncedTransactionService.findBySplitwiseExpenseId(
-          expense.id,
-        );
-
-      if (syncedTransaction) {
-        const updatedAmount = centsToMiliunits(
-          this.splitwise.getExpenseAmountForUser(expense),
-        );
-
-        updatedYnabExpenses.push({
-          id: syncedTransaction.ynabTransactionId,
-          amount: updatedAmount,
-        });
-
-        await this.syncedTransactionService.updateSyncedTransaction({
-          splitwiseExpenseId: expense.id,
-          ynabTransactionId: syncedTransaction.ynabTransactionId,
-          amount: updatedAmount,
-        });
-      }
-    }
-
-    await this.ynab.updateTransactions(updatedYnabExpenses);
 
     // Deleted Expenses
     await Promise.all(
