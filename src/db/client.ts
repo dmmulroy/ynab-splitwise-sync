@@ -1,4 +1,5 @@
 import { Sequelize } from 'sequelize';
+import pg from 'pg';
 
 let client: Sequelize;
 
@@ -7,6 +8,7 @@ function createNewPostgresClient(databaseUrl: string): Sequelize {
 
   client = new Sequelize(databaseUrl, {
     dialect: 'postgres',
+    dialectModule: pg,
     dialectOptions: {
       ssl: {
         rejectUnauthorized: false,
