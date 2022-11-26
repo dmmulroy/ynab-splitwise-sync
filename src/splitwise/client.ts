@@ -139,7 +139,7 @@ class SplitwiseClient implements Splitwise {
 
       return getExpensesResponseSchema.parse(data).expenses;
     } catch (error) {
-      throw new Error(`Splitwise Error: ${error.message}`);
+      throw new Error(`Splitwise Error: ${(error as Error).message}`);
     }
   }
 
@@ -162,7 +162,7 @@ class SplitwiseClient implements Splitwise {
 
       return getExpenseByIdResponseSchema.parse(data).expense;
     } catch (error) {
-      throw new Error(`Splitwise Error: ${error.message}`);
+      throw new Error(`Splitwise Error: ${(error as Error).message}`);
     }
   }
 
@@ -198,7 +198,7 @@ class SplitwiseClient implements Splitwise {
 
       return createExpenseResponseSchema.parse(data).expenses[0];
     } catch (error) {
-      throw new Error(`Splitwise Error: ${error.message}`);
+      throw new Error(`Splitwise Error: ${(error as Error).message}`);
     }
   }
 
@@ -225,7 +225,7 @@ class SplitwiseClient implements Splitwise {
 
       return z.object({ success: z.boolean() }).parse(data);
     } catch (error) {
-      throw new Error(`Splitwise Error: ${error.message}`);
+      throw new Error(`Splitwise Error: ${(error as Error).message}`);
     }
   }
 
