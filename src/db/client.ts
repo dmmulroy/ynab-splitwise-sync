@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import pg from 'pg';
+delete (<any>pg).native;
 
 let client: Sequelize;
 
