@@ -8,18 +8,14 @@
     "test:integration": "jest --config jest-integration.config.ts",
     "sync:dev": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node --require dotenv/config scripts/sync.ts",
     "start": "npm run sync",
-    "sync": "ts-node --require dotenv/config scripts/sync.ts",
-    "sync-db:destructive": "DATABASE_URL=$(heroku config:get DATABASE_URL -a ynab-splitwise-sync) ts-node scripts/sync-db-destructive.ts"
+    "sync": "ts-node --require dotenv/config scripts/sync.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@netlify/functions": "^1.3.0",
     "dotenv": "^10.0.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.8.0",
-    "pg-hstore": "^2.3.4",
-    "pg-native": "file:./shims/pg-native",
     "query-string": "^7.0.1",
     "sequelize": "^6.6.5",
     "ts-node": "^10.2.1",
