@@ -19,6 +19,7 @@
     "node-fetch": "^2.6.1",
     "pg": "^8.8.0",
     "pg-hstore": "^2.3.4",
+    "pg-native": "3.0.1 ",
     "query-string": "^7.0.1",
     "sequelize": "^6.6.5",
     "ts-node": "^10.2.1",
