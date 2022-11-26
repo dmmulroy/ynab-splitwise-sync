@@ -15,6 +15,7 @@ function createNewPostgresClient(databaseUrl: string): Sequelize {
         rejectUnauthorized: false,
       },
     },
+    native: false,
   });
 
   return client;
