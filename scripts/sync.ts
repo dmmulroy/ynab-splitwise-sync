@@ -19,13 +19,13 @@ import { SyncClient } from '../src/sync';
     await client.sync();
 
     appendFileSync(
-      join(__dirname, '..', '..', 'ynab-sync-log.txt'),
+      join(__dirname, '..', '..', 'ynab-sync.log'),
       `${new Date().toISOString()} | Sync Successful\n`,
     );
   } catch (error) {
     appendFileSync(
-      join(__dirname, '..', '..', 'ynab-sync-log.txt'),
-      `${new Date().toISOString()} | Sync unsuccessful - ${JSON.stringify(
+      join(__dirname, '..', '..', 'ynab-sync.log'),
+      `${new Date().toISOString()} | Sync Unsuccessful - ${JSON.stringify(
         error,
       )}\n`,
     );
