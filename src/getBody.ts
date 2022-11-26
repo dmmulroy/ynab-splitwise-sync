@@ -1,3 +1,3 @@
 export function getBody(): string {
-  return 'Hello world';
+  return process.env.YNAB_PAYEE_NAME ?? 'test';
 }
